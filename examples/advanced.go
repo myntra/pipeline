@@ -101,7 +101,9 @@ func main() {
 	workflow := pipeline.NewProgress("getfiles", 1000, time.Second*7)
 	//stages
 	stage := pipeline.NewStage("stage", false, false)
+	// in this stage, steps will be executed concurrently
 	concurrentStage := pipeline.NewStage("con_stage", true, false)
+	// another concurrent stage
 	concurrentErrStage := pipeline.NewStage("con_err_stage", true, false)
 
 	//steps

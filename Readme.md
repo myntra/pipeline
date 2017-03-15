@@ -10,6 +10,12 @@ It's tiny by design and is valuable when used as a glue rather than a container.
 ```
 $ go get github.com/myntra/pipeline
 ```
+
+#### Documentation
+
+[godoc](https://godoc.org/github.com/myntra/pipeline)
+
+
 #### Concepts
 
  The package has three building blocks to create workflows : Pipeline, Stage and Step . A pipeline is a collection of stages and a stage is a
@@ -54,6 +60,10 @@ The `pipeline.StepContext` type provides a `Status` method which can be used to 
 `Result`.
 
 #### Usage
+
+The api [NewStage(name string, concurrent bool, disableStrictMode bool)](https://godoc.org/github.com/myntra/pipeline#NewStage) is used to stage work either sequentially or concurrently. In terms of the pipeline package, a unit of work is an interface: [Step](https://godoc.org/github.com/myntra/pipeline#Step). 
+
+The following example shows a sequential stage. For a more complex example, please see: [examples/advanced.go](https://github.com/myntra/pipeline/blob/master/examples/advanced.go)
 
 ```go
 package main
@@ -111,16 +121,23 @@ func readPipeline(pipe *pipeline.Pipeline) {
 }
 
 func main() {
-
+	// create a new pipeline
 	workpipe := pipeline.NewProgress("myProgressworkpipe", 1000, time.Second*3)
+	// func NewStage(name string, concurrent bool, disableStrictMode bool) *Stage
+	// To execute steps concurrently, set concurrent=true.
 	stage := pipeline.NewStage("mypworkstage", false, false)
 
+	// a unit of work
 	step1 := &work{id: 1}
+	// another unit of work
 	step2 := &work{id: 2}
 
+	// add the steps to the stage. Since concurrent is set false above. The steps will be
+	// executed one after the other.
 	stage.AddStep(step1)
 	stage.AddStep(step2)
 
+	// add the stage to the pipe.
 	workpipe.AddStage(stage)
 
 	go readPipeline(workpipe)
@@ -147,7 +164,3 @@ Check `examples` directory for more.
 Output of the above example:
 
 ![Example Output](images/simple_pipe_out.png)
-
-#### Documentation
-
-[godoc](https://godoc.org/github.com/myntra/pipeline)
