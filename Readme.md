@@ -142,9 +142,9 @@ func main() {
 
 	go readPipeline(workpipe)
 
-	err := workpipe.Run()
-	if err != nil {
-		fmt.Println(err)
+	result := workpipe.Run()
+	if result.Error != nil {
+		fmt.Println(result.Error)
 	}
 
 	fmt.Println("timeTaken:", workpipe.GetDuration())
