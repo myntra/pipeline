@@ -103,6 +103,7 @@ func (st *Stage) run(request *Request) *Result {
 			}
 
 			if res == nil {
+				res = &Result{}
 				step.Status("end")
 				continue
 			}
