@@ -32,14 +32,14 @@ func TestPipeline(t *testing.T) {
 		testpipe, errorPipe := createPipeline(test)
 		go readPipeline(testpipe)
 		if errorPipe {
-			err := testpipe.Run()
-			if err == nil {
+			result := testpipe.Run()
+			if result.Error == nil {
 				log.Fatalf("Test failed: %v", test.pipelineName)
 			}
 
 		} else {
-			err := testpipe.Run()
-			if err != nil {
+			result := testpipe.Run()
+			if result.Error != nil {
 				log.Fatalf("Test failed: %v", test.pipelineName)
 			}
 		}

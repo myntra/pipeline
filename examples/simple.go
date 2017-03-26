@@ -66,7 +66,7 @@ func main() {
 	go readPipeline(workpipe)
 
 	result := workpipe.Run()
-	if result != nil && result.Error != nil {
+	if result.Error != nil {
 		fmt.Println(result.Error)
 	}
 
