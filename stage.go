@@ -93,15 +93,17 @@ func (st *Stage) run(request *Request) *Result {
 
 	} else {
 		st.status("is not concurrent")
+		res := &Result{}
 		for _, step := range st.Steps {
 			step.Status("begin")
-			res := step.Exec(request)
+			res = step.Exec(request)
 			if res != nil && res.Error != nil {
 				step.Status(">>>failed !!!")
 				return res
 			}
 
 			if res == nil {
+				res = &Result{}
 				step.Status("end")
 				continue
 			}
@@ -110,6 +112,7 @@ func (st *Stage) run(request *Request) *Result {
 			request.KeyVal = res.KeyVal
 			step.Status("end")
 		}
+		return res
 	}
 
 	return &Result{}
