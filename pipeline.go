@@ -138,7 +138,7 @@ func (p *Pipeline) Run() *Result {
 	for i, stage := range p.Stages {
 		stage.index = i
 		result = stage.run(request)
-		if result != nil && result.Error != nil {
+		if result.Error != nil {
 			p.status("stage: " + stage.Name + " failed !!! ")
 			return result
 		}
