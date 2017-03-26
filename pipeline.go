@@ -134,9 +134,10 @@ func (p *Pipeline) Run() *Result {
 
 	p.status("begin")
 	request := &Request{}
+	result := &Result{}
 	for i, stage := range p.Stages {
 		stage.index = i
-		result := stage.run(request)
+		result = stage.run(request)
 		if result != nil && result.Error != nil {
 			p.status("stage: " + stage.Name + " failed !!! ")
 			return result
@@ -145,7 +146,7 @@ func (p *Pipeline) Run() *Result {
 		request.KeyVal = result.KeyVal
 	}
 
-	return nil
+	return result
 }
 
 // Out collects the status output from the stages and steps
