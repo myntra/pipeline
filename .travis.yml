@@ -1,0 +1,13 @@
+language: go
+
+os:
+  - linux
+  - osx
+
+script:
+  - go build -v .
+  - go test -v ./
+
+notifications:
+  email:
+    - badr.adnaan@gmail.com

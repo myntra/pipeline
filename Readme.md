@@ -1,4 +1,14 @@
-Pipeline is a package to build multi-staged concurrent workflows with a centralized logging output.
+<p align="center">
+  <h3 align="center">Pipeline</h3>
+  <p align="center">A package to build multi-staged concurrent workflows with a centralized logging output. </p>
+  <p align="center">
+    <a href="https://travis-ci.org/myntra/pipeline"><img src="https://travis-ci.org/myntra/pipeline.svg?branch=master"></a>
+    <a href="https://godoc.org/github.com/myntra/pipeline"><img src="https://godoc.org/github.com/myntra/pipeline?status.svg"></a>
+    <a href="https://goreportcard.com/report/github.com/myntra/pipeline"><img src="https://goreportcard.com/badge/github.com/myntra/pipeline"></a>
+  </p>
+</p>
+
+---
 
 The package could be used to define and execute CI/CD tasks(either sequential or concurrent). A tool with similar goals
 would be [Jenkins Pipeline](https://jenkins.io/doc/book/pipeline/overview/). However, compared to Jenkins Pipeline, this package has
@@ -10,11 +20,6 @@ It's tiny by design and is valuable when used as a glue rather than a container.
 ```
 $ go get github.com/myntra/pipeline
 ```
-
-#### Documentation
-
-[godoc](https://godoc.org/github.com/myntra/pipeline)
-
 
 #### Concepts
 

@@ -1,0 +1,4 @@
+package: github.com/myntra/pipeline
+import:
+- package: github.com/fatih/color
+  version: ^1.4.1
