@@ -4,8 +4,8 @@
   <p align="center">A package to build multi-staged concurrent workflows with a centralized logging output. </p>
   <p align="center">
     <a href="https://travis-ci.org/myntra/pipeline"><img src="https://travis-ci.org/myntra/pipeline.svg?branch=master"></a>
-    <a href="https://godoc.org/github.com/myntra/pipeline"><img src="https://godoc.org/github.com/myntra/pipeline?status.svg"></a>
-    <a href="https://goreportcard.com/report/github.com/myntra/pipeline"><img src="https://goreportcard.com/badge/github.com/myntra/pipeline"></a>
+    <a href="https://godoc.org/gopkg.in/myntra/pipeline.v1"><img src="https://godoc.org/gopkg.in/myntra/pipeline.v1?status.svg"></a>
+    <a href="https://goreportcard.com/report/gopkg.in/myntra/pipeline.v1"><img src="https://goreportcard.com/badge/gopkg.in/myntra/pipeline.v1"></a>
   </p>
 </p>
 
