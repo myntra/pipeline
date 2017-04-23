@@ -1,4 +1,5 @@
 <p align="center">
+  <img src="https://cdn.rawgit.com/myntra/pipeline/master/images/pipe.png" height="150" width="150" />
   <h3 align="center">Pipeline</h3>
   <p align="center">A package to build multi-staged concurrent workflows with a centralized logging output. </p>
   <p align="center">
@@ -26,7 +27,7 @@ $ go get github.com/myntra/pipeline
  The package has three building blocks to create workflows : Pipeline, Stage and Step . A pipeline is a collection of stages and a stage is a
  collection of steps. A stage can have either concurrent or sequential steps, while stages are always sequential.
 
-![Pipeline](images/pipeline.png)
+![Pipeline](https://cdn.rawgit.com/myntra/pipeline/master/images/pipeline.png)
 
 The step block is where the actual work is done. Stage and pipeline act as flow governors.
 
@@ -168,4 +169,4 @@ Check `examples` directory for more.
 
 Output of the above example:
 
-![Example Output](images/simple_pipe_out.png)
+![Example Output](https://cdn.rawgit.com/myntra/pipeline/master/images/simple_pipe_out.png)
