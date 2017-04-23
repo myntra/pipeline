@@ -1,1 +1,1 @@
-The icon "pipe.svg" is pipes by Quentin B.  from the Noun Project
+The icon "pipes.png" is pipes by Maria de la Riva from the Noun Project

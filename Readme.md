@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.rawgit.com/myntra/pipeline/master/images/pipe.svg" height="150" width="150" />
+  <img src="https://cdn.rawgit.com/myntra/pipeline/master/images/pipes.png" height="150" width="150" />
   <h3 align="center">Pipeline</h3>
   <p align="center">A package to build multi-staged concurrent workflows with a centralized logging output. </p>
   <p align="center">
