@@ -13,19 +13,25 @@ import (
 //    disableStrictMode: In strict mode if a single step fails, all the other concurrent steps are cancelled.
 //    Step.Cancel will be invoked for cancellation of the step. Set disableStrictMode to true to disable strict mode
 type Stage struct {
-	Name              string `json:"name"`
-	Steps             []Step `json:"steps"`
-	Concurrent        bool   `json:"concurrent"`
-	DisableStrictMode bool   `json:"disableStrictMode"`
-	index             int
-	pipelineKey       string
+	Name        string `json:"name"`
+	Steps       []Step `json:"steps"`
+	config      *stageConfig
+	index       int
+	pipelineKey string
 }
 
 // NewStage returns a new stage
 // 	name of the stage
 // 	concurrent flag sets whether the steps will be executed concurrently
-func NewStage(name string, concurrent bool, disableStrictMode bool) *Stage {
-	st := &Stage{Name: name, Concurrent: concurrent}
+func NewStage(name string, opts ...StageOption) *Stage {
+
+	config := &stageConfig{}
+
+	for _, o := range opts {
+		o(config)
+	}
+
+	st := &Stage{Name: name, config: config}
 	return st
 }
 
@@ -42,7 +48,7 @@ func (st *Stage) run(request *Request) *Result {
 	st.status("begin")
 	defer st.status("end")
 
-	if st.Concurrent {
+	if st.config.concurrent {
 		st.status("is concurrent")
 		g, ctx := withContext(context.Background())
 		for _, step := range st.Steps {
@@ -52,7 +58,7 @@ func (st *Stage) run(request *Request) *Result {
 
 				defer step.Status("end")
 				//disables strict mode. g.run will wait for all steps to finish
-				if st.DisableStrictMode {
+				if st.config.disableStrictMode {
 					return step.Exec(request)
 				}
 
@@ -69,9 +75,7 @@ func (st *Stage) run(request *Request) *Result {
 				select {
 				case <-ctx.Done():
 
-					if err := step.Cancel(); err != nil {
-						st.status("Error Cancelling Step " + step.getCtx().name)
-					}
+					step.Cancel()
 
 					<-resultChan
 					return &Result{Error: ctx.Err()}

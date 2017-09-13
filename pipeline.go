@@ -9,19 +9,15 @@ import (
 	"unicode"
 
 	"github.com/fatih/color"
+	uuid "github.com/satori/go.uuid"
 )
-
-// DefaultDrainTimeout time to wait for all readers to finish consuming output
-const DefaultDrainTimeout = time.Second * 5
-
-// DefaultBuffer channel buffer size of the output buffer
-const DefaultBuffer = 1000
 
 // Pipeline is a sequence of stages
 type Pipeline struct {
 	Name             string   `json:"name"`
 	Stages           []*Stage `json:"stages"`
-	DrainTimeout     time.Duration
+	uuid             string
+	config           *pipelineConfig
 	expectedDuration time.Duration
 	duration         time.Duration
 	outsubscribed    bool
@@ -34,51 +30,77 @@ type Pipeline struct {
 // New returns a new pipeline
 // 	name of the pipeline
 // 	outBufferLen is the size of the output buffered channel
-func New(name string, outBufferLen int) *Pipeline {
+func New(name string, opts ...Option) *Pipeline {
 
-	return newPipeline(name, outBufferLen)
-}
+	config := &pipelineConfig{
+		outBufferSize:   DefaultOutBufferSize,
+		outDrainTimeout: DefaultOutDrainTimeout,
+	}
 
-// NewProgress returns a new pipeline which returns progress updates
-// 	name of the pipeline
-// 	outBufferLen is the size of the output buffered channel
-//
-// 	expectedDurationInMs is the expected time for the job to finish in milliseconds
-// 	If set, you can get the current time spent from GetDuration()int64 and
-// 	listen on the channel returned by GetProgress() <-chan float64 to get current progress
-func NewProgress(name string, outBufferLen int, expectedDuration time.Duration) *Pipeline {
+	uuid := uuid.NewV1().String()
 
-	p := newPipeline(name, outBufferLen)
-	p.expectedDuration = expectedDuration
-	p.tick = time.Millisecond * 250
-	return p
-}
+	if name == "" {
+		name = uuid
+	} else {
+		name = spaceMap(name)
+	}
 
-func newPipeline(name string, outBufferLen int) *Pipeline {
-	if outBufferLen < 0 {
-		outBufferLen = 1
+	for _, o := range opts {
+		o(config)
 	}
 
 	if buffersMap == nil {
 		buffersMap = &buffers{bufferMap: make(map[string]*buffer)}
 	}
 
-	p := &Pipeline{Name: spaceMap(name)}
-	p.outbufferlen = outBufferLen
-
-	if p.DrainTimeout == 0 {
-		p.DrainTimeout = DefaultDrainTimeout
+	p := &Pipeline{
+		Name:   name,
+		config: config,
+		uuid:   uuid,
 	}
 
-	buf := buffer{in: make(chan string, outBufferLen), out: []chan string{}, progress: []chan int64{}}
-	buffersMap.set(p.Name, &buf)
+	buf := buffer{in: make(chan string, p.config.outBufferSize), out: []chan string{}, progress: []chan int64{}}
+	buffersMap.set(p.uuid, &buf)
 
 	return p
+
 }
 
-// SetDrainTimeout sets DrainTimeout
-func (p *Pipeline) SetDrainTimeout(timeout time.Duration) {
-	p.DrainTimeout = timeout
+// Clone pipeline
+func (p *Pipeline) Clone(name string, opts ...Option) *Pipeline {
+
+	config := &pipelineConfig{
+		outBufferSize:   p.config.outBufferSize,
+		outDrainTimeout: p.config.outDrainTimeout,
+	}
+
+	uuid := uuid.NewV1().String()
+
+	if name == "" {
+		name = uuid
+	} else {
+		name = spaceMap(name)
+	}
+
+	for _, o := range opts {
+		o(config)
+	}
+
+	if buffersMap == nil {
+		buffersMap = &buffers{bufferMap: make(map[string]*buffer)}
+	}
+
+	cp := &Pipeline{
+		Name:   name,
+		config: config,
+		Stages: p.Stages,
+		uuid:   uuid,
+	}
+
+	buf := buffer{in: make(chan string, p.config.outBufferSize), out: []chan string{}, progress: []chan int64{}}
+	buffersMap.set(p.uuid, &buf)
+
+	return cp
 }
 
 // AddStage adds a new stage to the pipeline
@@ -88,7 +110,7 @@ func (p *Pipeline) AddStage(stage ...*Stage) {
 			ctx := &stepContextVal{
 				name:        p.Name + "." + stage[i].Name + "." + reflect.TypeOf(stage[i].Steps[j]).String(),
 				pipelineKey: p.Name,
-				concurrent:  stage[i].Concurrent,
+				concurrent:  stage[i].config.concurrent,
 				index:       j,
 			}
 
@@ -101,7 +123,7 @@ func (p *Pipeline) AddStage(stage ...*Stage) {
 }
 
 // Run the pipeline. The stages are executed in sequence while steps may be concurrent or sequential.
-func (p *Pipeline) Run() *Result {
+func (p *Pipeline) Run(data interface{}) *Result {
 
 	if len(p.Stages) == 0 {
 		return &Result{Error: fmt.Errorf("No stages to be executed")}
@@ -113,7 +135,7 @@ func (p *Pipeline) Run() *Result {
 		ticker = time.NewTicker(p.tick)
 		ctx, cancelProgress := context.WithCancel(context.Background())
 		p.cancelProgress = cancelProgress
-		go p.updateProgress(ticker, ctx)
+		go p.updateProgress(ctx, ticker)
 	}
 
 	buf, ok := buffersMap.get(p.Name)
@@ -133,7 +155,7 @@ func (p *Pipeline) Run() *Result {
 	defer p.status("end")
 
 	p.status("begin")
-	request := &Request{}
+	request := &Request{Data: data}
 	result := &Result{}
 	for i, stage := range p.Stages {
 		stage.index = i
@@ -176,7 +198,7 @@ func (p *Pipeline) GetProgressPercent() (<-chan int64, error) {
 }
 
 // started as a goroutine
-func (p *Pipeline) updateProgress(ticker *time.Ticker, ctx context.Context) {
+func (p *Pipeline) updateProgress(ctx context.Context, ticker *time.Ticker) {
 	start := time.Now()
 	for range ticker.C {
 		p.duration = time.Since(start)
@@ -239,7 +261,7 @@ loop:
 			if empty {
 				break loop
 			}
-		case <-time.After(p.DrainTimeout):
+		case <-time.After(p.config.outDrainTimeout):
 			break loop
 		}
 	}
