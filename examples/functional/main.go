@@ -59,4 +59,20 @@ func main() {
 	}
 
 	fmt.Println("timeTaken:", logParserPipe.GetDuration())
+
+	clonedlogParserPipe := logParserPipe.Clone("")
+
+	go readPipeline(clonedlogParserPipe)
+
+	data2 := map[string]string{
+		"c": "d",
+	}
+
+	result = clonedlogParserPipe.Run(data2)
+	if result.Error != nil {
+		fmt.Println(result.Error)
+	}
+
+	fmt.Println("timeTaken:", clonedlogParserPipe.GetDuration())
+
 }
