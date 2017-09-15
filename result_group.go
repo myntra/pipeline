@@ -24,7 +24,7 @@ type group struct {
 	wg sync.WaitGroup
 
 	errOnce sync.Once
-	result  *Result
+	results []*Result
 }
 
 // WithContext returns a new Group and an associated Context derived from ctx.
@@ -34,17 +34,17 @@ type group struct {
 // first.
 func withContext(ctx context.Context) (*group, context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
-	return &group{cancel: cancel, result: &Result{}}, ctx
+	return &group{cancel: cancel}, ctx
 }
 
 // Wait blocks until all function calls from the Go method have returned, then
 // returns the first non-nil error (if any) from them.
-func (g *group) wait() *Result {
+func (g *group) wait() []*Result {
 	g.wg.Wait()
 	if g.cancel != nil {
 		g.cancel()
 	}
-	return g.result
+	return g.results
 }
 
 // Go calls the given function in a new goroutine.
@@ -59,7 +59,7 @@ func (g *group) run(f func() *Result) {
 
 		if result := f(); result.Error != nil {
 			g.errOnce.Do(func() {
-				g.result = result
+				g.results = append(g.results, result)
 				if g.cancel != nil {
 					g.cancel()
 				}

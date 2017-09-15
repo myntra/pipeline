@@ -9,15 +9,12 @@ type Result struct {
 	Error error
 	// dispatch any type
 	Data interface{}
-	// dispatch key value pairs
-	KeyVal map[string]interface{}
 }
 
 // Request is the result dispatched in a previous step.
 type Request struct {
 	stepContext *StepContext
 	Data        interface{}
-	KeyVal      map[string]interface{}
 }
 
 // Status logs the status line to the out channel

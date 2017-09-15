@@ -19,9 +19,8 @@ func (w *work) Exec(request *pipeline.Request) *pipeline.Result {
 	time.Sleep(time.Millisecond * duration)
 	msg := fmt.Sprintf("work %d", w.id)
 	return &pipeline.Result{
-		Error:  nil,
-		Data:   map[string]string{"msg": msg},
-		KeyVal: map[string]interface{}{"msg": msg},
+		Error: nil,
+		Data:  map[string]string{"msg": msg},
 	}
 }
 

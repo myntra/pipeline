@@ -63,9 +63,8 @@ func (d *downloadStep) Exec(request *pipeline.Request) *pipeline.Result {
 	d.Status([]byte(fmt.Sprintf("Successfully downloaded file %s", d.fileName)))
 
 	return &pipeline.Result{
-		Error:  nil,
-		Data:   struct{ bytesDownloaded int64 }{bytesDownloaded: n},
-		KeyVal: map[string]interface{}{"bytesDownloaded": n},
+		Error: nil,
+		Data:  struct{ bytesDownloaded int64 }{bytesDownloaded: n},
 	}
 }
 

@@ -18,12 +18,24 @@ type Stage struct {
 	pipelineKey string
 }
 
+// DefaultMergeFunc merges results from concurrent steps in the form []interface{}
+func DefaultMergeFunc(results []*Result) *Result {
+	var mergedData []interface{}
+	for _, r := range results {
+		mergedData = append(mergedData, r.Data)
+	}
+
+	return &Result{Data: mergedData}
+}
+
 // NewStage returns a new stage
 // 	name of the stage
 // 	concurrent flag sets whether the steps will be executed concurrently
 func NewStage(name string, opts ...StageOption) *Stage {
 
-	config := &stageConfig{}
+	config := &stageConfig{
+		mergeFunc: DefaultMergeFunc,
+	}
 
 	for _, o := range opts {
 		o(config)
@@ -84,8 +96,8 @@ func (st *Stage) run(request *Request) *Result {
 			})
 		}
 
-		if result := g.wait(); result != nil && result.Error != nil {
-			return result
+		if results := g.wait(); len(results) != 0 {
+			return st.config.mergeFunc(results)
 		}
 
 	} else {
@@ -102,7 +114,6 @@ func (st *Stage) run(request *Request) *Result {
 			}
 
 			request.Data = res.Data
-			request.KeyVal = res.KeyVal
 		}
 		return res
 	}

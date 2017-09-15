@@ -42,6 +42,7 @@ func ExpectedDuration(timeout time.Duration) Option {
 type stageConfig struct {
 	concurrent        bool
 	disableStrictMode bool
+	mergeFunc         func([]*Result) *Result
 }
 
 // StageOption represents an option for a stage. It must be used as an arg
@@ -60,5 +61,13 @@ func Concurrent(enable bool) StageOption {
 func DisableStrictMode(disable bool) StageOption {
 	return StageOption(func(c *stageConfig) {
 		c.disableStrictMode = disable
+	})
+}
+
+// MergeFunc is used to merge results from concurrent steps and is only called
+// when concurrent steps are enabled.
+func MergeFunc(fn func([]*Result) *Result) StageOption {
+	return StageOption(func(c *stageConfig) {
+		c.mergeFunc = fn
 	})
 }

@@ -162,7 +162,6 @@ func (p *Pipeline) Run(data interface{}) *Result {
 			return result
 		}
 		request.Data = result.Data
-		request.KeyVal = result.KeyVal
 	}
 
 	return result
