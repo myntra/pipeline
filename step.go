@@ -2,9 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/fatih/color"
 )
 
 // Result is returned by a step to dispatch data to the next step or stage
@@ -24,8 +21,8 @@ type Request struct {
 }
 
 // Status logs the status line to the out channel
-func (r *Request) Status(line string) {
-	r.stepContext.Status(line)
+func (r *Request) Status(data []byte) {
+	r.stepContext.Status(data)
 }
 
 // Step is the unit of work which can be concurrently or sequentially staged with other steps
@@ -38,7 +35,7 @@ type Step interface {
 }
 
 type out interface {
-	Status(line string)
+	Status(data []byte)
 	getCtx() *stepContextVal
 	setCtx(ctx *stepContextVal)
 }
@@ -64,11 +61,8 @@ func (sc *StepContext) setCtx(ctx *stepContextVal) {
 }
 
 // Status is used to log status from a step
-func (sc *StepContext) Status(line string) {
-	stepText := fmt.Sprintf("[step-%d]", sc.getCtx().index)
-	blue := color.New(color.FgBlue).SprintFunc()
-	line = blue(stepText) + "[" + sc.getCtx().name + "]: " + line
-	send(sc.getCtx().pipelineKey, line)
+func (sc *StepContext) Status(data []byte) {
+	send(sc.getCtx().pipelineKey, data)
 }
 
 type step struct {

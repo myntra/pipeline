@@ -75,15 +75,15 @@ type TestStep struct {
 }
 
 func (t TestStep) Exec(request *Request) *Result {
-	t.Status("start step")
-	t.Status("executing test ")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test "))
 	time.Sleep(time.Millisecond * 200)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return nil
 }
 
 func (t TestStep) Cancel() {
-	t.Status("cancel step")
+	t.Status([]byte("cancel step"))
 }
 
 type TestStep2 struct {
@@ -92,15 +92,15 @@ type TestStep2 struct {
 }
 
 func (t TestStep2) Exec(request *Request) *Result {
-	t.Status("start step")
-	t.Status("executing test 2")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test 2"))
 	time.Sleep(time.Millisecond * 200)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return nil
 }
 
 func (t TestStep2) Cancel() {
-	t.Status("cancel step")
+	t.Status([]byte("cancel step"))
 }
 
 type TestStepErr struct {
@@ -110,15 +110,15 @@ type TestStepErr struct {
 
 func (t TestStepErr) Exec(request *Request) *Result {
 
-	t.Status("start step")
-	t.Status("executing test err")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test err"))
 	time.Sleep(time.Millisecond * 500)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return &Result{Error: errors.New("test error 1")}
 }
 
 func (t TestStepErr) Cancel() {
-	t.Status("cancel step")
+	t.Status([]byte("cancel step"))
 }
 
 type TestStepErr2 struct {
@@ -127,15 +127,15 @@ type TestStepErr2 struct {
 }
 
 func (t TestStepErr2) Exec(request *Request) *Result {
-	t.Status("start step")
-	t.Status("executing test err 2")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test err 2"))
 	time.Sleep(time.Millisecond * 200)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return &Result{Error: errors.New("test error 2")}
 }
 
 func (t TestStepErr2) Cancel() {
-	t.Status("cancel step")
+	t.Status([]byte("cancel step"))
 }
 
 type sg struct {

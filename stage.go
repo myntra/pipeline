@@ -3,8 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-
-	"github.com/fatih/color"
 )
 
 // Stage is a collection of steps executed concurrently or sequentially
@@ -45,18 +43,14 @@ func (st *Stage) run(request *Request) *Result {
 	if len(st.Steps) == 0 {
 		return &Result{Error: fmt.Errorf("No steps to be executed")}
 	}
-	st.status("begin")
-	defer st.status("end")
-
 	if st.config.concurrent {
-		st.status("is concurrent")
 		g, ctx := withContext(context.Background())
 		for _, step := range st.Steps {
 			step := step
-			step.Status("begin")
+			step.Status([]byte("begin"))
 			g.run(func() *Result {
 
-				defer step.Status("end")
+				defer step.Status([]byte("end"))
 				//disables strict mode. g.run will wait for all steps to finish
 				if st.config.disableStrictMode {
 					return step.Exec(request)
@@ -91,41 +85,27 @@ func (st *Stage) run(request *Request) *Result {
 		}
 
 		if result := g.wait(); result != nil && result.Error != nil {
-			st.status(" >>>failed !!! ")
 			return result
 		}
 
 	} else {
-		st.status("is not concurrent")
 		res := &Result{}
 		for _, step := range st.Steps {
-			step.Status("begin")
 			res = step.Exec(request)
 			if res != nil && res.Error != nil {
-				step.Status(">>>failed !!!")
 				return res
 			}
 
 			if res == nil {
 				res = &Result{}
-				step.Status("end")
 				continue
 			}
 
 			request.Data = res.Data
 			request.KeyVal = res.KeyVal
-			step.Status("end")
 		}
 		return res
 	}
 
 	return &Result{}
-}
-
-// status writes a line to the out channel
-func (st *Stage) status(line string) {
-	stageText := fmt.Sprintf("[stage-%d]", st.index)
-	yellow := color.New(color.FgYellow).SprintFunc()
-	line = yellow(stageText) + "[" + st.Name + "]: " + line
-	send(st.pipelineKey, line)
 }

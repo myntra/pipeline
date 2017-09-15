@@ -9,7 +9,7 @@ import (
 
 // TransformStep ...
 func TransformStep(context context.Context, request *pipeline.Request) *pipeline.Result {
-	request.Status("Starting transformstep")
+	request.Status([]byte("Starting transformstep"))
 	fmt.Println(request.Data)
 	// handle cancel step: https://blog.golang.org/context
 	//<-context.Done() is unblocked when step is cancelled on error returned by sibling concurrent step

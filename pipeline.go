@@ -8,7 +8,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/fatih/color"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -59,7 +58,7 @@ func New(name string, opts ...Option) *Pipeline {
 		uuid:   uuid,
 	}
 
-	buf := buffer{in: make(chan string, p.config.outBufferSize), out: []chan string{}, progress: []chan int64{}}
+	buf := buffer{in: make(chan []byte, p.config.outBufferSize), out: []chan []byte{}, progress: []chan int64{}}
 	buffersMap.set(p.uuid, &buf)
 
 	return p
@@ -97,7 +96,7 @@ func (p *Pipeline) Clone(name string, opts ...Option) *Pipeline {
 		uuid:   uuid,
 	}
 
-	buf := buffer{in: make(chan string, p.config.outBufferSize), out: []chan string{}, progress: []chan int64{}}
+	buf := buffer{in: make(chan []byte, p.config.outBufferSize), out: []chan []byte{}, progress: []chan int64{}}
 	buffersMap.set(p.uuid, &buf)
 
 	return cp
@@ -109,14 +108,14 @@ func (p *Pipeline) AddStage(stage ...*Stage) {
 		for j := range stage[i].Steps {
 			ctx := &stepContextVal{
 				name:        p.Name + "." + stage[i].Name + "." + reflect.TypeOf(stage[i].Steps[j]).String(),
-				pipelineKey: p.Name,
+				pipelineKey: p.uuid,
 				concurrent:  stage[i].config.concurrent,
 				index:       j,
 			}
 
 			stage[i].Steps[j].setCtx(ctx)
 		}
-		stage[i].pipelineKey = p.Name
+		stage[i].pipelineKey = p.uuid
 	}
 
 	p.Stages = append(p.Stages, stage...)
@@ -152,16 +151,14 @@ func (p *Pipeline) Run(data interface{}) *Result {
 	if p.expectedDuration != 0 && p.tick != 0 {
 		defer ticker.Stop()
 	}
-	defer p.status("end")
 
-	p.status("begin")
 	request := &Request{Data: data}
 	result := &Result{}
 	for i, stage := range p.Stages {
 		stage.index = i
 		result = stage.run(request)
 		if result.Error != nil {
-			p.status("stage: " + stage.Name + " failed !!! ")
+
 			return result
 		}
 		request.Data = result.Data
@@ -172,9 +169,9 @@ func (p *Pipeline) Run(data interface{}) *Result {
 }
 
 // Out collects the status output from the stages and steps
-func (p *Pipeline) Out() (<-chan string, error) {
+func (p *Pipeline) Out() (<-chan []byte, error) {
 	// add a new listener
-	out := make(chan string, p.outbufferlen)
+	out := make(chan []byte, p.outbufferlen)
 	err := buffersMap.appendOutBuffer(p.Name, out)
 	if err != nil {
 		return nil, err
@@ -273,10 +270,8 @@ loop:
 }
 
 // status writes a line to the out channel
-func (p *Pipeline) status(line string) {
-	red := color.New(color.FgRed).SprintFunc()
-	line = red("[pipeline]") + "[" + p.Name + "]: " + line
-	send(p.Name, line)
+func (p *Pipeline) status(data []byte) {
+	send(p.Name, data)
 }
 
 func spaceMap(str string) string {
