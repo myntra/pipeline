@@ -31,9 +31,9 @@ func newDownloadStep(fileName string, bytes int64, fail bool) *downloadStep {
 
 func (d *downloadStep) Exec(request *pipeline.Request) *pipeline.Result {
 
-	d.Status(fmt.Sprintf("%+v", request))
+	d.Status([]byte(fmt.Sprintf("%+v", request)))
 
-	d.Status(fmt.Sprintf("Started downloading file %s", d.fileName))
+	d.Status([]byte(fmt.Sprintf("Started downloading file %s", d.fileName)))
 
 	client := &http.Client{}
 
@@ -60,19 +60,17 @@ func (d *downloadStep) Exec(request *pipeline.Request) *pipeline.Result {
 		return &pipeline.Result{Error: fmt.Errorf("File download failed %s", d.fileName)}
 	}
 
-	d.Status(fmt.Sprintf("Successfully downloaded file %s", d.fileName))
+	d.Status([]byte(fmt.Sprintf("Successfully downloaded file %s", d.fileName)))
 
 	return &pipeline.Result{
-		Error:  nil,
-		Data:   struct{ bytesDownloaded int64 }{bytesDownloaded: n},
-		KeyVal: map[string]interface{}{"bytesDownloaded": n},
+		Error: nil,
+		Data:  struct{ bytesDownloaded int64 }{bytesDownloaded: n},
 	}
 }
 
-func (d *downloadStep) Cancel() error {
-	d.Status(fmt.Sprintf("Cancel downloading file %s", d.fileName))
+func (d *downloadStep) Cancel() {
+	d.Status([]byte(fmt.Sprintf("Cancel downloading file %s", d.fileName)))
 	d.cancel()
-	return nil
 }
 
 func readPipeline(pipe *pipeline.Pipeline) {
@@ -98,13 +96,15 @@ func readPipeline(pipe *pipeline.Pipeline) {
 
 func main() {
 
-	workflow := pipeline.NewProgress("getfiles", 1000, time.Second*7)
+	workflow := pipeline.New("getfiles",
+		pipeline.OutBufferSize(1000),
+		pipeline.ExpectedDuration(7*time.Second))
 	//stages
-	stage := pipeline.NewStage("stage", false, false)
+	stage := pipeline.NewStage("stage", pipeline.Concurrent(true))
 	// in this stage, steps will be executed concurrently
-	concurrentStage := pipeline.NewStage("con_stage", true, false)
+	concurrentStage := pipeline.NewStage("con_stage", pipeline.Concurrent(true))
 	// another concurrent stage
-	concurrentErrStage := pipeline.NewStage("con_err_stage", true, false)
+	concurrentErrStage := pipeline.NewStage("con_err_stage", pipeline.Concurrent(true))
 
 	//steps
 	fileStep1mb := newDownloadStep("1mbfile", 1e6, false)
@@ -129,7 +129,7 @@ func main() {
 	go readPipeline(workflow)
 
 	// execute pipeline
-	result := workflow.Run()
+	result := workflow.Run(nil)
 	if result.Error != nil {
 		fmt.Println(result.Error)
 	}

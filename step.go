@@ -1,9 +1,7 @@
 package pipeline
 
 import (
-	"fmt"
-
-	"github.com/fatih/color"
+	"context"
 )
 
 // Result is returned by a step to dispatch data to the next step or stage
@@ -11,14 +9,17 @@ type Result struct {
 	Error error
 	// dispatch any type
 	Data interface{}
-	// dispatch key value pairs
-	KeyVal map[string]interface{}
 }
 
 // Request is the result dispatched in a previous step.
 type Request struct {
-	Data   interface{}
-	KeyVal map[string]interface{}
+	stepContext *StepContext
+	Data        interface{}
+}
+
+// Status logs the status line to the out channel
+func (r *Request) Status(data []byte) {
+	r.stepContext.Status(data)
 }
 
 // Step is the unit of work which can be concurrently or sequentially staged with other steps
@@ -27,11 +28,11 @@ type Step interface {
 	// Exec is invoked by the pipeline when it is run
 	Exec(*Request) *Result
 	// Cancel is invoked by the pipeline when one of the concurrent steps set Result{Error:err}
-	Cancel() error
+	Cancel()
 }
 
 type out interface {
-	Status(line string)
+	Status(data []byte)
 	getCtx() *stepContextVal
 	setCtx(ctx *stepContextVal)
 }
@@ -57,9 +58,33 @@ func (sc *StepContext) setCtx(ctx *stepContextVal) {
 }
 
 // Status is used to log status from a step
-func (sc *StepContext) Status(line string) {
-	stepText := fmt.Sprintf("[step-%d]", sc.getCtx().index)
-	blue := color.New(color.FgBlue).SprintFunc()
-	line = blue(stepText) + "[" + sc.getCtx().name + "]: " + line
-	send(sc.getCtx().pipelineKey, line)
+func (sc *StepContext) Status(data []byte) {
+	send(sc.getCtx().pipelineKey, data)
+}
+
+type step struct {
+	StepContext
+	execFunc   func(context context.Context, r *Request) *Result
+	cancelFunc context.CancelFunc
+}
+
+func (s *step) Exec(request *Request) *Result {
+
+	request.stepContext = &s.StepContext
+	var ctx context.Context
+	ctx, s.cancelFunc = context.WithCancel(context.Background())
+	return s.execFunc(ctx, request)
+
+}
+
+func (s *step) Cancel() {
+	s.cancelFunc()
+}
+
+// NewStep creates a new step
+func NewStep(exec func(context context.Context, r *Request) *Result) Step {
+	return &step{
+		execFunc: exec,
+	}
+
 }

@@ -14,20 +14,18 @@ type work struct {
 
 func (w *work) Exec(request *pipeline.Request) *pipeline.Result {
 
-	w.Status(fmt.Sprintf("%+v", request))
+	w.Status([]byte(fmt.Sprintf("%+v", request)))
 	duration := time.Duration(1000 * w.id)
 	time.Sleep(time.Millisecond * duration)
 	msg := fmt.Sprintf("work %d", w.id)
 	return &pipeline.Result{
-		Error:  nil,
-		Data:   map[string]string{"msg": msg},
-		KeyVal: map[string]interface{}{"msg": msg},
+		Error: nil,
+		Data:  map[string]string{"msg": msg},
 	}
 }
 
-func (w *work) Cancel() error {
-	w.Status("cancel step")
-	return nil
+func (w *work) Cancel() {
+	w.Status([]byte("cancel step"))
 }
 
 func readPipeline(pipe *pipeline.Pipeline) {
@@ -53,8 +51,10 @@ func readPipeline(pipe *pipeline.Pipeline) {
 
 func main() {
 
-	workpipe := pipeline.NewProgress("myProgressworkpipe", 1000, time.Second*3)
-	stage := pipeline.NewStage("mypworkstage", false, false)
+	workpipe := pipeline.New("myProgressworkpipe",
+		pipeline.OutBufferSize(1000),
+		pipeline.ExpectedDuration(1e3*time.Millisecond))
+	stage := pipeline.NewStage("mypworkstage", pipeline.Concurrent(true))
 	step1 := &work{id: 1}
 	step2 := &work{id: 2}
 
@@ -65,7 +65,7 @@ func main() {
 
 	go readPipeline(workpipe)
 
-	result := workpipe.Run()
+	result := workpipe.Run(nil)
 	if result.Error != nil {
 		fmt.Println(result.Error)
 	}

@@ -32,13 +32,13 @@ func TestPipeline(t *testing.T) {
 		testpipe, errorPipe := createPipeline(test)
 		go readPipeline(testpipe)
 		if errorPipe {
-			result := testpipe.Run()
+			result := testpipe.Run(nil)
 			if result.Error == nil {
 				log.Fatalf("Test failed: %v", test.pipelineName)
 			}
 
 		} else {
-			result := testpipe.Run()
+			result := testpipe.Run(nil)
 			if result.Error != nil {
 				log.Fatalf("Test failed: %v", test.pipelineName)
 			}
@@ -53,13 +53,13 @@ func BenchmarkPipeline(b *testing.B) {
 			i := rand.Intn(len(tests))
 			testpipe, errorPipe := createPipeline(tests[i])
 			if errorPipe {
-				err := testpipe.Run()
+				err := testpipe.Run(nil)
 				if err == nil {
 					log.Fatalf("Test failed: %v", testpipe.Name)
 				}
 
 			} else {
-				err := testpipe.Run()
+				err := testpipe.Run(nil)
 				if err != nil {
 					log.Fatalf("Test failed: %v", testpipe.Name)
 				}
@@ -75,16 +75,15 @@ type TestStep struct {
 }
 
 func (t TestStep) Exec(request *Request) *Result {
-	t.Status("start step")
-	t.Status("executing test ")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test "))
 	time.Sleep(time.Millisecond * 200)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return nil
 }
 
-func (t TestStep) Cancel() error {
-	t.Status("cancel step")
-	return nil
+func (t TestStep) Cancel() {
+	t.Status([]byte("cancel step"))
 }
 
 type TestStep2 struct {
@@ -93,16 +92,15 @@ type TestStep2 struct {
 }
 
 func (t TestStep2) Exec(request *Request) *Result {
-	t.Status("start step")
-	t.Status("executing test 2")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test 2"))
 	time.Sleep(time.Millisecond * 200)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return nil
 }
 
-func (t TestStep2) Cancel() error {
-	t.Status("cancel step")
-	return nil
+func (t TestStep2) Cancel() {
+	t.Status([]byte("cancel step"))
 }
 
 type TestStepErr struct {
@@ -112,16 +110,15 @@ type TestStepErr struct {
 
 func (t TestStepErr) Exec(request *Request) *Result {
 
-	t.Status("start step")
-	t.Status("executing test err")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test err"))
 	time.Sleep(time.Millisecond * 500)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return &Result{Error: errors.New("test error 1")}
 }
 
-func (t TestStepErr) Cancel() error {
-	t.Status("cancel step")
-	return nil
+func (t TestStepErr) Cancel() {
+	t.Status([]byte("cancel step"))
 }
 
 type TestStepErr2 struct {
@@ -130,16 +127,15 @@ type TestStepErr2 struct {
 }
 
 func (t TestStepErr2) Exec(request *Request) *Result {
-	t.Status("start step")
-	t.Status("executing test err 2")
+	t.Status([]byte("start step"))
+	t.Status([]byte("executing test err 2"))
 	time.Sleep(time.Millisecond * 200)
-	t.Status("end step")
+	t.Status([]byte("end step"))
 	return &Result{Error: errors.New("test error 2")}
 }
 
-func (t TestStepErr2) Cancel() error {
-	t.Status("cancel step")
-	return nil
+func (t TestStepErr2) Cancel() {
+	t.Status([]byte("cancel step"))
 }
 
 type sg struct {
@@ -155,14 +151,14 @@ type pipeConfig struct {
 }
 
 func createPipeline(testPipeConfig pipeConfig) (*Pipeline, bool) {
-	testpipe := New(testPipeConfig.pipelineName, testPipeConfig.pipeLineOutBufferLen)
+	testpipe := New(testPipeConfig.pipelineName)
 	errorPipeline := false
 
 	var testStages []*Stage
 
 	for i, sg := range testPipeConfig.sgArr {
 		// create stage
-		stage := NewStage(fmt.Sprintf("testStage%d", i), sg.concurrent, false)
+		stage := NewStage(fmt.Sprintf("testStage%d", i))
 		// create normal steps
 
 		for j := 0; j < sg.steps; j++ {

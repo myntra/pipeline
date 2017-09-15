@@ -3,8 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-
-	"github.com/fatih/color"
 )
 
 // Stage is a collection of steps executed concurrently or sequentially
@@ -13,19 +11,37 @@ import (
 //    disableStrictMode: In strict mode if a single step fails, all the other concurrent steps are cancelled.
 //    Step.Cancel will be invoked for cancellation of the step. Set disableStrictMode to true to disable strict mode
 type Stage struct {
-	Name              string `json:"name"`
-	Steps             []Step `json:"steps"`
-	Concurrent        bool   `json:"concurrent"`
-	DisableStrictMode bool   `json:"disableStrictMode"`
-	index             int
-	pipelineKey       string
+	Name        string `json:"name"`
+	Steps       []Step `json:"steps"`
+	config      *stageConfig
+	index       int
+	pipelineKey string
+}
+
+// DefaultMergeFunc merges results from concurrent steps in the form []interface{}
+func DefaultMergeFunc(results []*Result) *Result {
+	var mergedData []interface{}
+	for _, r := range results {
+		mergedData = append(mergedData, r.Data)
+	}
+
+	return &Result{Data: mergedData}
 }
 
 // NewStage returns a new stage
 // 	name of the stage
 // 	concurrent flag sets whether the steps will be executed concurrently
-func NewStage(name string, concurrent bool, disableStrictMode bool) *Stage {
-	st := &Stage{Name: name, Concurrent: concurrent}
+func NewStage(name string, opts ...StageOption) *Stage {
+
+	config := &stageConfig{
+		mergeFunc: DefaultMergeFunc,
+	}
+
+	for _, o := range opts {
+		o(config)
+	}
+
+	st := &Stage{Name: name, config: config}
 	return st
 }
 
@@ -39,20 +55,16 @@ func (st *Stage) run(request *Request) *Result {
 	if len(st.Steps) == 0 {
 		return &Result{Error: fmt.Errorf("No steps to be executed")}
 	}
-	st.status("begin")
-	defer st.status("end")
-
-	if st.Concurrent {
-		st.status("is concurrent")
+	if st.config.concurrent {
 		g, ctx := withContext(context.Background())
 		for _, step := range st.Steps {
 			step := step
-			step.Status("begin")
+			step.Status([]byte("begin"))
 			g.run(func() *Result {
 
-				defer step.Status("end")
+				defer step.Status([]byte("end"))
 				//disables strict mode. g.run will wait for all steps to finish
-				if st.DisableStrictMode {
+				if st.config.disableStrictMode {
 					return step.Exec(request)
 				}
 
@@ -69,9 +81,7 @@ func (st *Stage) run(request *Request) *Result {
 				select {
 				case <-ctx.Done():
 
-					if err := step.Cancel(); err != nil {
-						st.status("Error Cancelling Step " + step.getCtx().name)
-					}
+					step.Cancel()
 
 					<-resultChan
 					return &Result{Error: ctx.Err()}
@@ -86,42 +96,27 @@ func (st *Stage) run(request *Request) *Result {
 			})
 		}
 
-		if result := g.wait(); result != nil && result.Error != nil {
-			st.status(" >>>failed !!! ")
-			return result
+		if results := g.wait(); len(results) != 0 {
+			return st.config.mergeFunc(results)
 		}
 
 	} else {
-		st.status("is not concurrent")
 		res := &Result{}
 		for _, step := range st.Steps {
-			step.Status("begin")
 			res = step.Exec(request)
 			if res != nil && res.Error != nil {
-				step.Status(">>>failed !!!")
 				return res
 			}
 
 			if res == nil {
 				res = &Result{}
-				step.Status("end")
 				continue
 			}
 
 			request.Data = res.Data
-			request.KeyVal = res.KeyVal
-			step.Status("end")
 		}
 		return res
 	}
 
 	return &Result{}
-}
-
-// status writes a line to the out channel
-func (st *Stage) status(line string) {
-	stageText := fmt.Sprintf("[stage-%d]", st.index)
-	yellow := color.New(color.FgYellow).SprintFunc()
-	line = yellow(stageText) + "[" + st.Name + "]: " + line
-	send(st.pipelineKey, line)
 }

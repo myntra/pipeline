@@ -8,9 +8,9 @@ import (
 
 type buffer struct {
 	// single writer
-	in chan string
+	in chan []byte
 	// multiple readers
-	out      []chan string
+	out      []chan []byte
 	progress []chan int64
 }
 
@@ -59,7 +59,7 @@ func (bfs *buffers) remove(key string) {
 	delete(bfs.bufferMap, key)
 }
 
-func (bfs *buffers) appendOutBuffer(key string, o chan string) error {
+func (bfs *buffers) appendOutBuffer(key string, o chan []byte) error {
 	bfs.Lock()
 	defer bfs.Unlock()
 	val, ok := bfs.bufferMap[key]
@@ -97,12 +97,12 @@ func (bfs *buffers) all() map[string]*buffer {
 
 var buffersMap *buffers
 
-func send(pipelineKey string, line string) {
+func send(pipelineKey string, data []byte) {
 	// line = fmt.Sprintf(time.Now().Format("2006-01-02 15:04:05")) + " " + line
 	buf, ok := buffersMap.get(pipelineKey)
 	if !ok {
 		return
 	}
-	buf.in <- line
+	buf.in <- data
 
 }
