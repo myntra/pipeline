@@ -25,7 +25,7 @@ type Stage struct {
 // 	name of the stage
 // 	concurrent flag sets whether the steps will be executed concurrently
 func NewStage(name string, concurrent bool, disableStrictMode bool) *Stage {
-	st := &Stage{Name: name, Concurrent: concurrent}
+	st := &Stage{Name: name, Concurrent: concurrent,DisableStrictMode: disableStrictMode}
 	return st
 }
 
@@ -46,7 +46,6 @@ func (st *Stage) run(request *Request) *Result {
 		st.status("is concurrent")
 		g, ctx := withContext(context.Background())
 		for _, step := range st.Steps {
-			step := step
 			step.Status("begin")
 			g.run(func() *Result {
 
