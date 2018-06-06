@@ -25,6 +25,34 @@ type group struct {
 
 	errOnce sync.Once
 	result  *Result
+	sync.RWMutex
+}
+
+func (g *group) mergeResult(r *Result) {
+	g.Lock()
+	defer g.Unlock()
+
+	if r == nil {
+		return
+	}
+
+	if g.result == nil {
+		g.result = &Result{
+			KeyVal: make(map[string]interface{}),
+		}
+	}
+
+	// store the error received from the first error
+	if g.result.Error == nil {
+		if r.Error != nil {
+			g.result.Error = r.Error
+		}
+	}
+
+	// merge keyval result
+	for k, v := range r.KeyVal {
+		g.result.KeyVal[k] = v
+	}
 }
 
 // WithContext returns a new Group and an associated Context derived from ctx.
@@ -50,16 +78,15 @@ func (g *group) wait() *Result {
 // Go calls the given function in a new goroutine.
 //
 // The first call to return a non-nil error cancels the group; its error will be
-// returned by Wait.
+// returned by Wait. Result.KeyVal from each step are merged together in a single result and returned.
 func (g *group) run(f func() *Result) {
 	g.wg.Add(1)
-
 	go func() {
 		defer g.wg.Done()
-
-		if result := f(); result.Error != nil {
+		result := f()
+		g.mergeResult(result)
+		if result.Error != nil {
 			g.errOnce.Do(func() {
-				g.result = result
 				if g.cancel != nil {
 					g.cancel()
 				}
