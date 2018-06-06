@@ -36,9 +36,14 @@ func (g *group) mergeResult(r *Result) {
 		return
 	}
 
+	// initialize KeyVal
 	if g.result == nil {
 		g.result = &Result{
 			KeyVal: make(map[string]interface{}),
+		}
+	} else {
+		if g.result.KeyVal == nil {
+			g.result.KeyVal = make(map[string]interface{})
 		}
 	}
 
