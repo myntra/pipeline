@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/myntra/pipeline"
+	"github.com/ssor/pipeline"
 )
 
 type work struct {
