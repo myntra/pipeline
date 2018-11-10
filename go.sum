@@ -1,0 +1,7 @@
+github.com/fatih/color v1.4.1 h1:YJhD/SoQqn7ev9zwhIm7lHTAqsOAF2AN4xlAVZzNZnU=
+github.com/fatih/color v1.4.1/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
+github.com/mattn/go-colorable v0.0.0-20170210172801-5411d3eea597 h1:hGizH4aMDFFt1iOA4HNKC13lqIBoCyxIjWcAnWIy7aU=
+github.com/mattn/go-colorable v0.0.0-20170210172801-5411d3eea597/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
+github.com/mattn/go-isatty v0.0.0-20170307163044-57fdcb988a5c h1:AHfQR/s6GNi92TOh+kfGworqDvTxj2rMsS+Hca87nck=
+github.com/mattn/go-isatty v0.0.0-20170307163044-57fdcb988a5c/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
+golang.org/x/sys v0.0.0-20170213225739-e24f485414ae/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
