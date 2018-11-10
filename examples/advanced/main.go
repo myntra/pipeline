@@ -9,7 +9,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/myntra/pipeline"
+	"github.com/ssor/pipeline"
 )
 
 type downloadStep struct {
