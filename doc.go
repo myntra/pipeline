@@ -13,7 +13,7 @@ Example Usage:
     package main
 
     import (
-        "github.com/ssor/pipeline"
+        "github.com/myntra/pipeline"
         "fmt"
         "time"
     )
